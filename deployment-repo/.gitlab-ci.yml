@@ -1,0 +1,15 @@
+variables:
+  PROJECT_DIR: "/home/ubuntu/my-app"
+
+stages:
+- deploy
+
+deploy:
+  stage: deploy
+  before_script:
+  - chmod 400 "$SSH_PRIVATE_KEY"
+  - chmod +x deploy.sh
+  script:
+  - ./deploy.sh
+  rules:
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

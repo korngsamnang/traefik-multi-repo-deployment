@@ -1,0 +1,58 @@
+services:
+    traefik:
+        image: traefik:v2.10
+        container_name: traefik
+        restart: always
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+            - "letsencrypt:/letsencrypt"
+        command:
+            - "--api.dashboard=false"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+            - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+            - "--certificatesresolvers.letsencrypt.acme.email=korngsamnang168@gmail.com"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+        networks:
+            - webnet
+
+    app1:
+        image: ${IMAGE_NAME_APP1}:${IMAGE_TAG_APP1}
+        restart: always
+        networks:
+            - webnet
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app1.rule=Host(`app1.edstock.live`)"
+            - "traefik.http.services.app1.loadbalancer.server.port=3000"
+            - "traefik.http.routers.app1.entrypoints=websecure"
+            - "traefik.http.routers.app1.tls.certresolver=letsencrypt"
+            - "traefik.http.routers.app1.middlewares=compression@docker"
+            - "traefik.http.middlewares.compression.compress=true"
+
+    app2:
+        image: ${IMAGE_NAME_APP2}:${IMAGE_TAG_APP2}
+        restart: always
+        networks:
+            - webnet
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app2.rule=Host(`app2.edstock.live`)"
+            - "traefik.http.services.app2.loadbalancer.server.port=3000"
+            - "traefik.http.routers.app2.entrypoints=websecure"
+            - "traefik.http.routers.app2.tls.certresolver=letsencrypt"
+            - "traefik.http.routers.app2.middlewares=compression@docker"
+            - "traefik.http.middlewares.compression.compress=true"
+
+networks:
+    webnet:
+        driver: bridge
+
+volumes:
+    letsencrypt:
